@@ -134,7 +134,12 @@ const BookScreen = () => {
         </View>
       </Pressable>
 
-      
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        data={venues}
+        renderItem={({ item }) => <VenueCard item={item} />}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </SafeAreaView>
   );
 };
