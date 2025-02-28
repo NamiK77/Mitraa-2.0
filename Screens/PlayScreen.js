@@ -47,7 +47,52 @@ const PlayScreen = () => {
 
   console.log('games', games);
 
-  
+  const fetchGames = async () => {
+    try {
+      const response = await axios.get('http://10.0.2.2:8000/games');
+      setGames(response.data);
+    } catch (error) {
+      console.error('Failed to fetch games:', error);
+      // Handle error
+    }
+  };
+
+  // console.log('games', games);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUpcomingGames();
+    }
+  }, [userId]);
+  const fetchUpcomingGames = async () => {
+    try {
+      console.log('myysdyfydyfdf', userId);
+      const response = await axios.get(
+        `http://10.0.2.2:8000/upcoming?userId=${userId}`,
+      );
+      setUpcomingGames(response.data);
+    } catch (error) {
+      console.error('Failed to fetch upcoming games:', error);
+    }
+  };
+
+  console.log(upcomingGames);
+  // const filteredGames = games?.filter(game => game.sport === sport);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUser();
+    }
+  }, [userId]);
+  const fetchUser = async () => {
+    try {
+      console.log('mysysy', userId);
+      const response = await axios.get(`http://10.0.2.2:8000/user/${userId}`);
+      setUser(response.data);
+    } catch (error) {
+      // console.error('Error fetching user data:', error);
+    }
+  };
   useFocusEffect(
     useCallback(() => {
       if (userId) {
