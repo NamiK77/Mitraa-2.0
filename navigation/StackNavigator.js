@@ -32,6 +32,7 @@ import ManageRequests from '../Screens/ManageRequests';
 import ProfileDetailScreen from '../Screens/ProfileDetailScreen';
 import SlotScreen from '../Screens/SlotScreen';
 import PaymentScreen from '../Screens/PaymentScreen';
+import NotificationScreen from '../Screens/NotificationScreen';
 
 // import OtpScreen from '../Screens/OtpScreen';
 
@@ -208,6 +209,7 @@ const StackNavigator = () => {
           component={ManageRequests}
           options={{headerShown: false}}
         />
+        <Stack.Screen name="Notifications" component={NotificationScreen} options={{headerShown: false}} />
       </Stack.Navigator>
     );
   }
