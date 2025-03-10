@@ -576,7 +576,7 @@ const venues = [
       id: '10',
       name: 'Badminton',
       icon: 'badminton',
-      price: 500,
+      price: 5,
       courts: [
         {
           id: '10',
@@ -600,7 +600,7 @@ const venues = [
       id: '11',
       name: 'Cricket',
       icon: 'cricket',
-      price: 1100,
+      price: 1,
       courts: [
         {
           id: '10',
@@ -618,7 +618,7 @@ const venues = [
       id: '12',
       name: 'Tennis',
       icon: 'tennis',
-      price: 900,
+      price: 9,
       courts: [
         {
           id: '10',
@@ -1291,4 +1291,54 @@ app.post('/profile/:userId/activities', async (req, res) => {
     console.error('Error adding activity:', error);
     res.status(500).send('Server error');
   }
+});
+
+
+
+//Notifications part
+const Notification = require('./models/notification');
+app.get('/notifications', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
+  }
+});
+
+
+
+
+// Endpoint to verify payment
+// api/index.js
+// const axios = require('axios');
+
+app.post('/verify-payment', async (req, res) => {
+  const { token, amount } = req.body;
+
+  try {
+    const response = await axios.post('https://khalti.com/api/v2/payment/verify/', {
+      token,
+      amount,
+    }, {
+      headers: {
+        Authorization: `Key ${process.env.KHALTI_SECRET_KEY}`, // Use the secret key from environment variables
+      },
+    });
+
+    if (response.data.state.name === 'Completed') {
+      res.status(200).json({ success: true, message: 'Payment verified successfully' });
+    } else {
+      res.status(400).json({ success: false, message: 'Payment verification failed' });
+    }
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
