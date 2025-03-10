@@ -1,4 +1,4 @@
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View, Modal } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
@@ -8,6 +8,8 @@ import Entypo from 'react-native-vector-icons/Entypo';
 import { NavigationContainer, useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import { AuthContext } from "../AuthContext";
+import { WebView } from 'react-native-webview';
+import KhaltiPayment from '../components/KhaltiPayment';
 
 const PaymentScreen = () => {
   const navigation = useNavigation();
@@ -17,6 +19,7 @@ const PaymentScreen = () => {
 
   const { userId } = useContext(AuthContext);
   const [isMounted, setIsMounted] = useState(true);
+  const [showKhalti, setShowKhalti] = useState(false);
   
   const courtNumber = route.params.selectedCourt 
   const date = route.params.selectedDate;
@@ -60,232 +63,287 @@ const PaymentScreen = () => {
       }
     }
   };
-  return (
-    <>
-    <ScrollView style={{marginTop:50}}>
-      <View style={{ padding: 15 }}>
-        <Text style={{ fontSize: 23, fontWeight: "500", color: "#A020F0" }}>
-          {route.params.selectedSport}
-        </Text>
 
-        <View
-          style={{
-            borderColor: "#E0E0E0",
-            borderWidth: 1,
-            padding: 10,
-            marginTop: 10,
-            borderRadius: 6,
-            shadowColor: "#171717",
-            shadowOffset: { width: -1, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-          }}
-        >
-          <View>
-            <View
-              style={{
-                marginVertical: 3,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="fireplace-off"
-                size={20}
-                color="black"
-              />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
-                {route.params.selectedCourt}
-              </Text>
+  const handlePaymentSuccess = async (payload) => {
+    try {
+      const response = await fetch('http://10.0.2.2:8000/verify-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: payload.token,
+          amount: total * 100, // Amount in paisa
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        Alert.alert('Payment Successful', 'Your payment was successful.');
+        setShowKhalti(false);
+        bookSlot();
+      } else {
+        Alert.alert('Payment Verification Failed', result.message);
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      Alert.alert('Error', 'An error occurred while verifying the payment.');
+    }
+  };
+
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    Alert.alert('Payment Error', 'An error occurred during the payment process.');
+    setShowKhalti(false);
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView style={{marginTop:50}}>
+        <View style={{ padding: 15 }}>
+          <Text style={{ fontSize: 23, fontWeight: "500", color: "#A020F0" }}>
+            {route.params.selectedSport}
+          </Text>
+
+          <View
+            style={{
+              borderColor: "#E0E0E0",
+              borderWidth: 1,
+              padding: 10,
+              marginTop: 10,
+              borderRadius: 6,
+              shadowColor: "#171717",
+              shadowOffset: { width: -1, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+            }}
+          >
+            <View>
+              <View
+                style={{
+                  marginVertical: 3,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="fireplace-off"
+                  size={20}
+                  color="black"
+                />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
+                  {route.params.selectedCourt}
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginVertical: 3,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <Feather name="calendar" size={20} color="black" />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
+                  {route.params.selectedDate}
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginVertical: 3,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <Feather name="clock" size={20} color="black" />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
+                  {route.params.selectedTime}
+                </Text>
+              </View>
+              <View
+                style={{
+                  marginVertical: 3,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="currency-rupee"
+                  size={20}
+                  color="black"
+                />
+                <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
+                Nrs {route.params.price}
+                </Text>
+              </View>
             </View>
+
+            <Pressable></Pressable>
+          </View>
+        </View>
+
+        <View style={{ marginTop: 15, marginHorizontal: 15 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 7,
+              justifyContent: "space-between",
+            }}
+          >
             <View
-              style={{
-                marginVertical: 3,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 7,
-              }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 7 }}
             >
-              <Feather name="calendar" size={20} color="black" />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
-                {route.params.selectedDate}
-              </Text>
+              <Text>Court Price</Text>
+              <EvilIcons name="question" size={24} color="black" />
             </View>
-            <View
-              style={{
-                marginVertical: 3,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              <Feather name="clock" size={20} color="black" />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
-                {route.params.selectedTime}
-              </Text>
-            </View>
-            <View
-              style={{
-                marginVertical: 3,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 7,
-              }}
-            >
-              <MaterialCommunityIcons
-                name="currency-rupee"
-                size={20}
-                color="black"
-              />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: "#570987" }}>
-              Nrs {route.params.price}
-              </Text>
-            </View>
+            <Text style={{ fontSize: 16, fontWeight: "500" }}>
+            Nrs {route.params.price}
+            </Text>
           </View>
 
-          <Pressable></Pressable>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 7,
+              marginTop: 15,
+              justifyContent: "space-between",
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 7 }}
+            >
+              <Text>Convenience Fee</Text>
+              <EvilIcons name="question" size={24} color="black" />
+            </View>
+            <Text style={{ fontSize: 16, fontWeight: "500" }}>Nrs 8.8</Text>
+          </View>
         </View>
-      </View>
+        <Text
+          style={{
+            height: 1,
+            borderColor: "#E0E0E0",
+            borderWidth: 3,
+            marginTop: 20,
+          }}
+        />
 
-      <View style={{ marginTop: 15, marginHorizontal: 15 }}>
         <View
           style={{
+            marginHorizontal: 15,
+            marginTop: 10,
             flexDirection: "row",
             alignItems: "center",
-            gap: 7,
+
             justifyContent: "space-between",
           }}
         >
-          <View
-            style={{ flexDirection: "row", alignItems: "center", gap: 7 }}
-          >
-            <Text>Court Price</Text>
-            <EvilIcons name="question" size={24} color="black" />
-          </View>
-          <Text style={{ fontSize: 16, fontWeight: "500" }}>
-          Nrs {route.params.price}
+          <Text style={{ fontSize: 16, fontWeight: "500", color: "#A020F0" }}>Total Amount</Text>
+          <Text style={{ fontSize: 15, fontWeight: "500", color: "#A020F0" }}>
+            {total}
           </Text>
         </View>
 
         <View
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 7,
-            marginTop: 15,
-            justifyContent: "space-between",
+            marginHorizontal: 15,
+            marginTop: 10,
+            borderColor: "#C0C0C0",
+            borderWidth: 2,
+            padding: 8,
+            borderRadius: 6,
           }}
         >
           <View
-            style={{ flexDirection: "row", alignItems: "center", gap: 7 }}
-          >
-            <Text>Convenience Fee</Text>
-            <EvilIcons name="question" size={24} color="black" />
-          </View>
-          <Text style={{ fontSize: 16, fontWeight: "500" }}>Nrs 8.8</Text>
-        </View>
-      </View>
-      <Text
-        style={{
-          height: 1,
-          borderColor: "#E0E0E0",
-          borderWidth: 3,
-          marginTop: 20,
-        }}
-      />
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
 
-      <View
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={{ fontSize: 16 }}>Total Amount</Text>
+            <Text style={{ fontSize: 15, fontWeight: "500" }}>
+              To be paid at Venue
+            </Text>
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 5,
+              justifyContent: "space-between",
+            }}
+          >
+            <Text style={{ fontSize: 16 }}>Nrs {total}</Text>
+            <Text style={{ fontSize: 15, fontWeight: "500" }}>{total}</Text>
+          </View>
+        </View>
+        <Text
+          style={{
+            height: 1,
+            borderColor: "#E0E0E0",
+            borderWidth: 3,
+            marginTop: 20,
+          }}
+        />
+        <View
+          style={{ marginLeft: "auto", marginRight: "auto", marginTop: 20 }}
+        >
+          <Image
+            style={{ width: 400, height: 180, resizeMode: "contain" }}
+            source={require('../images/Logo.png')}
+          />
+        </View>
+      </ScrollView>
+
+      <Pressable
+        onPress={() => setShowKhalti(true)}
         style={{
+          backgroundColor: "#A020F0",
+          padding: 15,
+          marginBottom: 30,
+          borderRadius: 6,
           marginHorizontal: 15,
-          marginTop: 10,
           flexDirection: "row",
           alignItems: "center",
-
           justifyContent: "space-between",
         }}
       >
-        <Text style={{ fontSize: 16, fontWeight: "500", color: "#A020F0" }}>Total Amount</Text>
-        <Text style={{ fontSize: 15, fontWeight: "500", color: "#A020F0" }}>
-          {total}
+        <Text style={{ fontSize: 17, fontWeight: "500", color: "white" }}>
+          Nrs {total}
         </Text>
-      </View>
+        <Text style={{ fontSize: 17, fontWeight: "500", color: "white" }}>
+          Proceed With Khalti
+        </Text>
+      </Pressable>
 
-      <View
-        style={{
-          marginHorizontal: 15,
-          marginTop: 10,
-          borderColor: "#C0C0C0",
-          borderWidth: 2,
-          padding: 8,
-          borderRadius: 6,
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={{ fontSize: 16 }}>Total Amount</Text>
-          <Text style={{ fontSize: 15, fontWeight: "500" }}>
-            To be paid at Venue
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginTop: 5,
-            justifyContent: "space-between",
-          }}
-        >
-          <Text style={{ fontSize: 16 }}>Nrs {total}</Text>
-          <Text style={{ fontSize: 15, fontWeight: "500" }}>{total}</Text>
-        </View>
-      </View>
-      <Text
-        style={{
-          height: 1,
-          borderColor: "#E0E0E0",
-          borderWidth: 3,
-          marginTop: 20,
-        }}
-      />
-      <View
-        style={{ marginLeft: "auto", marginRight: "auto", marginTop: 20 }}
-      >
-        <Image
-          style={{ width: 400, height: 180, resizeMode: "contain" }}
-          source={require('../images/Logo.png')}
+      <Modal visible={showKhalti} animationType="slide">
+        <KhaltiPayment
+          amount={total}
+          onPaymentSuccess={handlePaymentSuccess}
+          onPaymentError={handlePaymentError}
         />
-      </View>
-    </ScrollView>
-
-    <Pressable
-    onPress={bookSlot}
-      style={{
-        backgroundColor: "#A020F0",
-        padding: 15,
-        marginBottom: 30,
-        borderRadius: 6,
-        marginHorizontal: 15,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <Text style={{ fontSize: 17, fontWeight: "500", color: "white" }}>
-        Nrs {total}
-      </Text>
-      <Text style={{ fontSize: 17, fontWeight: "500", color: "white" }}>
-        Proceed to Pay
-      </Text>
-    </Pressable>
-  </>
+        <Pressable
+          onPress={() => setShowKhalti(false)}
+          style={{
+            position: 'absolute',
+            top: 40,
+            right: 20,
+            backgroundColor: 'red',
+            padding: 10,
+            borderRadius: 5,
+          }}
+        >
+          <Text style={{ color: 'white' }}>Close</Text>
+        </Pressable>
+      </Modal>
+    </View>
   )
 }
 
