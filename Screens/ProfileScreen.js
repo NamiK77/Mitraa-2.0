@@ -1,14 +1,31 @@
-import {StyleSheet, Text, View, SafeAreaView, ScrollView, TouchableOpacity, Alert} from 'react-native';
-import React, {useContext} from 'react';
+import {StyleSheet, Text, View, SafeAreaView, ScrollView, TouchableOpacity, Alert, Image} from 'react-native';
+import React, {useContext, useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Entypo from 'react-native-vector-icons/Entypo';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {AuthContext} from '../AuthContext';
+import {useNavigation} from '@react-navigation/native';
+import axios from 'axios';
 
 const ProfileScreen = () => {
-  const {logout} = useContext(AuthContext);
+  const {logout, userId} = useContext(AuthContext);
+  const [user, setUser] = useState(null);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get(`http://10.0.2.2:8000/user/${userId}`);
+        setUser(response.data.user);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, [userId]);
 
   const handleLogout = () => {
     Alert.alert(
@@ -29,9 +46,30 @@ const ProfileScreen = () => {
     );
   };
 
+  const handleProfilePress = () => {
+    navigation.navigate('ProfileDetail');
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
       <ScrollView>
+        {/* User Image and Welcome Section */}
+        <View style={styles.welcomeSection}>
+          <View style={styles.welcomeContent}>
+            <TouchableOpacity onPress={handleProfilePress} style={styles.profileContainer}>
+              <Image
+                style={styles.profileImage}
+                source={{
+                  uri: user?.image || 'https://via.placeholder.com/80',
+                }}
+              />
+              <Text style={styles.welcomeText}>
+                Welcome, {user?.firstName || 'User'}!
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={{padding: 12}}>
           {/* First Section */}
           <View style={{backgroundColor: 'white', padding: 10, borderRadius: 10}}>
@@ -335,6 +373,31 @@ const ProfileScreen = () => {
   );
 };
 
-export default ProfileScreen;
+const styles = StyleSheet.create({
+  welcomeSection: {
+    backgroundColor: '#570987',
+    padding: 20,
+    alignItems: 'center',
+  },
+  welcomeContent: {
+    alignItems: 'center',
+  },
+  profileContainer: {
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#D397F8',
+    marginBottom: 10,
+  },
+  welcomeText: {
+    fontSize: 22,
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
-const styles = StyleSheet.create({});
+export default ProfileScreen;
