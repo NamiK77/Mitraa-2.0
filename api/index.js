@@ -989,24 +989,54 @@ app.get('/games/:gameId/requests', async (req, res) => {
   }
 });
 
+// app.post('/accept', async (req, res) => {
+//   const {gameId, userId} = req.body;
+
+//   console.log('user', userId);
+
+//   console.log('heyy', gameId);
+
+//   try {
+//     // Find the game
+//     const game = await Game.findById(gameId);
+//     if (!game) {
+//       return res.status(404).json({message: 'Game not found'});
+//     }
+
+//     game.players.push(userId);
+
+//     // Remove the user from the requests array
+//     // game.requests.splice(requestIndex, 1);
+
+//     await Game.findByIdAndUpdate(
+//       gameId,
+//       {
+//         $pull: {requests: {userId: userId}},
+//       },
+//       {new: true},
+//     );
+
+//     // Save the updated game
+//     await game.save();
+
+//     res.status(200).json({message: 'Request accepted', game});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({message: 'Server error'});
+//   }
+// });
+
 app.post('/accept', async (req, res) => {
   const {gameId, userId} = req.body;
 
-  console.log('user', userId);
-
-  console.log('heyy', gameId);
-
   try {
-    // Find the game
     const game = await Game.findById(gameId);
     if (!game) {
       return res.status(404).json({message: 'Game not found'});
     }
 
     game.players.push(userId);
-
-    // Remove the user from the requests array
-    // game.requests.splice(requestIndex, 1);
+    await game.addPlayerNotification(userId); // Add notification logic
 
     await Game.findByIdAndUpdate(
       gameId,
@@ -1016,7 +1046,6 @@ app.post('/accept', async (req, res) => {
       {new: true},
     );
 
-    // Save the updated game
     await game.save();
 
     res.status(200).json({message: 'Request accepted', game});
@@ -1124,11 +1153,39 @@ const Message = require('./models/message');
 // Add these new endpoints
 
 // Send a message
+// app.post('/messages', async (req, res) => {
+//   try {
+//     const { gameId, userId, message } = req.body;
+    
+//     // Verify that the user is a player in the game
+//     const game = await Game.findById(gameId);
+//     if (!game) {
+//       return res.status(404).json({ message: 'Game not found' });
+//     }
+    
+//     if (!game.players.includes(userId)) {
+//       return res.status(403).json({ message: 'You must be a player in the game to send messages' });
+//     }
+    
+//     const newMessage = new Message({
+//       gameId,
+//       userId,
+//       message,
+//     });
+    
+//     await newMessage.save();
+    
+//     res.status(200).json(newMessage);
+//   } catch (error) {
+//     console.error('Failed to send message:', error);
+//     res.status(500).json({ message: 'Failed to send message' });
+//   }
+// });
+
 app.post('/messages', async (req, res) => {
   try {
     const { gameId, userId, message } = req.body;
     
-    // Verify that the user is a player in the game
     const game = await Game.findById(gameId);
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
@@ -1145,6 +1202,7 @@ app.post('/messages', async (req, res) => {
     });
     
     await newMessage.save();
+    await newMessage.addMessageNotification(); // Add notification logic
     
     res.status(200).json(newMessage);
   } catch (error) {
@@ -1295,19 +1353,6 @@ app.post('/profile/:userId/activities', async (req, res) => {
 
 
 
-//Notifications part
-const Notification = require('./models/notification');
-app.get('/notifications', async (req, res) => {
-  try {
-    const userId = req.query.userId;
-    const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
-    res.status(200).json(notifications);
-  } catch (error) {
-    console.error('Failed to fetch notifications:', error);
-    res.status(500).json({ message: 'Failed to fetch notifications' });
-  }
-});
-
 
 
 
@@ -1341,4 +1386,69 @@ app.post('/verify-payment', async (req, res) => {
 
 app.listen(3000, () => {
   console.log('Server is running on port 3000');
+});
+
+
+
+
+//Notifications part
+
+const Notification = require('./models/notification'); // Add this line
+// app.get('/notifications', async (req, res) => {
+//   try {
+//     const userId = req.query.userId;
+//     const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
+//     res.status(200).json(notifications);
+//   } catch (error) {
+//     console.error('Failed to fetch notifications:', error);
+//     res.status(500).json({ message: 'Failed to fetch notifications' });
+//   }
+// });
+// Assuming you have a route to fetch notifications
+// Assuming you have a route to fetch notifications
+// Assuming you have a route to fetch notifications
+app.get('/notifications', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const notifications = await Notification.find({ userId })
+      .populate('userId', 'firstName lastName image') // Populate user information
+      .sort({ createdAt: -1 });
+    res.status(200).json(notifications);
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
+  }
+});
+
+
+
+
+app.post('/games/:gameId/request', async (req, res) => {
+  const { gameId } = req.params;
+  const { userId, comment } = req.body;
+
+  try {
+    const game = await Game.findById(gameId);
+    if (!game) {
+      return res.status(404).json({ message: 'Game not found' });
+    }
+
+    game.requests.push({ userId, comment });
+    await game.save();
+
+    // Create a notification for the game admin
+    const notification = new Notification({
+      userId: game.admin, // Notify the admin
+      message: `User ${userId} requested to join your game.`,
+      type: 'request',
+      gameId: gameId,
+    });
+
+    await notification.save();
+
+    res.status(200).json({ message: 'Request sent', game });
+  } catch (error) {
+    console.error('Failed to send request:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
