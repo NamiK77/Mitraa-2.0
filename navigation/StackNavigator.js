@@ -34,6 +34,8 @@ import SlotScreen from '../Screens/SlotScreen';
 import PaymentScreen from '../Screens/PaymentScreen';
 import NotificationScreen from '../Screens/NotificationScreen';
 
+import AddVenueScreen from '../Screens/AddVenueScreen';
+import SkillsScreen from '../Screens/SkillsScreen';
 // import OtpScreen from '../Screens/OtpScreen';
 
 const StackNavigator = () => {
@@ -203,13 +205,27 @@ const StackNavigator = () => {
           component={PlayersScreen}
           options={{headerShown: false}}
         />
+        <Stack.Screen
+          name="AddVenue"
+          component={AddVenueScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+        name="Skills"
+        component={SkillsScreen} // Add the Skills screen
+        options={{headerShown: false}}
+      />
 
         <Stack.Screen
           name="Manage"
           component={ManageRequests}
           options={{headerShown: false}}
         />
-        <Stack.Screen name="Notifications" component={NotificationScreen} options={{headerShown: false}} />
+        <Stack.Screen
+          name="Notifications"
+          component={NotificationScreen}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     );
   }

@@ -50,6 +50,14 @@ const ProfileScreen = () => {
     navigation.navigate('ProfileDetail');
   };
 
+  const handleAddVenue = () => {
+    navigation.navigate('AddVenue');
+  };
+
+  const handleSkillsPress = () => {
+    navigation.navigate('Skills'); // Ensure this navigates to the Skills screen
+  };
+
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#f5f5f5'}}>
       <ScrollView>
@@ -71,6 +79,66 @@ const ProfileScreen = () => {
         </View>
 
         <View style={{padding: 12}}>
+          {/* First Section - Add this new item at the top */}
+          <View style={{backgroundColor: 'white', padding: 10, borderRadius: 10, marginBottom: 12}}>
+            <TouchableOpacity 
+              onPress={handleAddVenue}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: '#E0E0E0',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <MaterialIcons name="add-business" size={24} color={'#570987'} />
+              </View>
+
+              <View>
+                <Text style={{fontSize: 16, fontWeight: '500'}}>Add Venue</Text>
+                <Text style={{marginTop: 7, color: 'gray'}}>
+                  Register your sports venue
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Skills Section */}
+          <View style={{backgroundColor: 'white', padding: 10, borderRadius: 10, marginBottom: 12}}>
+            <TouchableOpacity 
+              onPress={handleSkillsPress} // Use the handleSkillsPress function
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}>
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                  backgroundColor: '#E0E0E0',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <MaterialIcons name="school" size={24} color={'#570987'} />
+              </View>
+
+              <View>
+                <Text style={{fontSize: 16, fontWeight: '500'}}>Skills</Text>
+                <Text style={{marginTop: 7, color: 'gray'}}>
+                  View and manage your skills
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
           {/* First Section */}
           <View style={{backgroundColor: 'white', padding: 10, borderRadius: 10}}>
             <View style={{flexDirection: 'row', alignItems: 'center', gap: 10}}>
