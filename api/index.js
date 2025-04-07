@@ -33,6 +33,7 @@ const Game = require('./models/game');
 const Venue = require('./models/venue');
 
 
+
 app.post('/register', async (req, res) => {
   try {
     const userData = req.body;
@@ -681,6 +682,18 @@ app.get('/venues', async (req, res) => {
   }
 });
 
+app.post('/api/venues', async (req, res) => {
+  try {
+    const venueData = req.body;
+    const newVenue = new Venue(venueData);
+    await newVenue.save();
+    res.status(201).json({ message: 'Venue added successfully', venue: newVenue });
+  } catch (error) {
+    console.error('Error adding venue:', error);
+    res.status(500).json({ message: 'Failed to add venue' });
+  }
+});
+
 
 app.post('/creategame', async (req, res) => {
   try {
@@ -989,54 +1002,24 @@ app.get('/games/:gameId/requests', async (req, res) => {
   }
 });
 
-// app.post('/accept', async (req, res) => {
-//   const {gameId, userId} = req.body;
-
-//   console.log('user', userId);
-
-//   console.log('heyy', gameId);
-
-//   try {
-//     // Find the game
-//     const game = await Game.findById(gameId);
-//     if (!game) {
-//       return res.status(404).json({message: 'Game not found'});
-//     }
-
-//     game.players.push(userId);
-
-//     // Remove the user from the requests array
-//     // game.requests.splice(requestIndex, 1);
-
-//     await Game.findByIdAndUpdate(
-//       gameId,
-//       {
-//         $pull: {requests: {userId: userId}},
-//       },
-//       {new: true},
-//     );
-
-//     // Save the updated game
-//     await game.save();
-
-//     res.status(200).json({message: 'Request accepted', game});
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({message: 'Server error'});
-//   }
-// });
-
 app.post('/accept', async (req, res) => {
   const {gameId, userId} = req.body;
 
+  console.log('user', userId);
+
+  console.log('heyy', gameId);
+
   try {
+    // Find the game
     const game = await Game.findById(gameId);
     if (!game) {
       return res.status(404).json({message: 'Game not found'});
     }
 
     game.players.push(userId);
-    await game.addPlayerNotification(userId); // Add notification logic
+
+    // Remove the user from the requests array
+    // game.requests.splice(requestIndex, 1);
 
     await Game.findByIdAndUpdate(
       gameId,
@@ -1046,6 +1029,7 @@ app.post('/accept', async (req, res) => {
       {new: true},
     );
 
+    // Save the updated game
     await game.save();
 
     res.status(200).json({message: 'Request accepted', game});
@@ -1054,6 +1038,35 @@ app.post('/accept', async (req, res) => {
     res.status(500).json({message: 'Server error'});
   }
 });
+
+// app.post('/accept', async (req, res) => {
+//   const {gameId, userId} = req.body;
+
+//   try {
+//     const game = await Game.findById(gameId);
+//     if (!game) {
+//       return res.status(404).json({message: 'Game not found'});
+//     }
+
+//     game.players.push(userId);
+//     await game.addPlayerNotification(userId); // Add notification logic
+
+//     await Game.findByIdAndUpdate(
+//       gameId,
+//       {
+//         $pull: {requests: {userId: userId}},
+//       },
+//       {new: true},
+//     );
+
+//     await game.save();
+
+//     res.status(200).json({message: 'Request accepted', game});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({message: 'Server error'});
+//   }
+// });
 
 
 
@@ -1450,5 +1463,61 @@ app.post('/games/:gameId/request', async (req, res) => {
   } catch (error) {
     console.error('Failed to send request:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+const PaymentHistory = require('./models/paymentHistory');
+
+app.post('/save-payment-history', async (req, res) => {
+  try {
+    const { userId, token, amount, courtNumber, date, time, name, game } = req.body;
+    const paymentHistory = new PaymentHistory({
+      userId,
+      token,
+      amount,
+      courtNumber,
+      date,
+      time,
+      name,
+      game,
+    });
+
+    await paymentHistory.save();
+    res.status(200).json({ message: 'Payment history saved successfully' });
+  } catch (error) {
+    console.error('Error saving payment history:', error);
+    res.status(500).json({ message: 'Error saving payment history', error });
+  }
+});
+
+
+const Skills = require('./models/Skills'); // Import the Skills model
+
+// Fetch user skillsr
+app.get('/api/users/:userId/skills', async (req, res) => {
+  try {
+    const skills = await Skills.findOne({ userId: req.params.userId });
+    res.json({ skills: skills ? skills.skills : {} });
+  } catch (error) {
+    console.error('Error fetching skills:', error);
+    res.status(500).json({ message: 'Failed to fetch skills' });
+  }
+});
+
+// Update user skills
+app.post('/api/users/:userId/skills', async (req, res) => {
+  try {
+    const { skills } = req.body;
+    const updatedSkills = await Skills.findOneAndUpdate(
+      { userId: req.params.userId },
+      { skills },
+      { new: true, upsert: true }
+    );
+    res.json({ skills: updatedSkills.skills });
+  } catch (error) {
+    console.error('Error updating skills:', error);
+    res.status(500).json({ message: 'Failed to update skills' });
   }
 });
