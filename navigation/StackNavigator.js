@@ -36,7 +36,11 @@ import NotificationScreen from '../Screens/NotificationScreen';
 
 import AddVenueScreen from '../Screens/AddVenueScreen';
 import SkillsScreen from '../Screens/SkillsScreen';
+import PlaypalsScreen from '../Screens/PlaypalsScreen';
 // import OtpScreen from '../Screens/OtpScreen';
+import ChatScreen from '../Screens/ChatScreen';
+import MyVenuesGamesScreen from '../Screens/MyVenuesGamesScreen';
+import MyBookingsScreen from '../Screens/MyBookingsScreen';
 
 const StackNavigator = () => {
   const Stack = createNativeStackNavigator();
@@ -211,10 +215,33 @@ const StackNavigator = () => {
           options={{headerShown: false}}
         />
         <Stack.Screen
-        name="Skills"
-        component={SkillsScreen} // Add the Skills screen
-        options={{headerShown: false}}
-      />
+          name="Skills"
+          component={SkillsScreen} // Add the Skills screen
+          options={{headerShown: false}}
+        />
+
+        <Stack.Screen
+          name="Chat"
+          component={ChatScreen}
+          options={{headerShown: false}} // Hide header for ChatScreen
+        />
+
+        <Stack.Screen
+          name="Playpals"
+          component={PlaypalsScreen}
+          options={{headerShown: false}} // Hide header for PlaypalsScreen
+        />
+
+        <Stack.Screen
+          name="MyVenuesGames"
+          component={MyVenuesGamesScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="MyBookings"
+          component={MyBookingsScreen}
+          options={{headerShown: false}}
+        />
 
         <Stack.Screen
           name="Manage"
