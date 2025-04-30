@@ -1290,7 +1290,6 @@ app.post('/book', async (req, res) => {
     if (!venue) {
       return res.status(404).json({ message: 'Venue not found' });
     }
-
     // Check for booking conflicts
     const bookingConflict = venue.bookings.find(
       booking => booking.courtNumber === courtNumber && booking.date === date && booking.time === time
@@ -1299,7 +1298,6 @@ app.post('/book', async (req, res) => {
     if (bookingConflict) {
       return res.status(400).json({ message: 'Slot already booked' });
     }
-
     // Add new booking
     venue.bookings.push({ courtNumber, date, time, user: userId, game });
     await venue.save();
@@ -1521,3 +1519,174 @@ app.post('/api/users/:userId/skills', async (req, res) => {
     res.status(500).json({ message: 'Failed to update skills' });
   }
 });
+
+
+// ... existing code ...
+
+app.get('/users', async (req, res) => {
+  try {
+    const users = await User.find({});
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Failed to fetch users' });
+  }
+});
+
+// ... existing code ...
+
+
+
+
+// day 4/10/2025
+
+// ... existing code ...
+
+// ... existing code ...
+
+const Chat = require('./models/chat');
+
+// Create a new chat
+app.post('/chat/create', async (req, res) => {
+  try {
+    const { user1Id, user2Id } = req.body;
+    const newChat = new Chat({ participants: [user1Id, user2Id] });
+    await newChat.save();
+    res.status(200).json({ chatId: newChat._id });
+  } catch (error) {
+    console.error('Error creating chat:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Send a message
+app.post('/chat/:chatId/message', async (req, res) => {
+  const { chatId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    return res.status(400).json({ error: 'Invalid chat ID' });
+  }
+
+  try {
+    const { senderId, text, image } = req.body;
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ error: 'Chat not found' });
+    }
+
+    chat.messages.push({ sender: senderId, text, image });
+    await chat.save();
+
+    res.status(200).json({ message: 'Message sent' });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Fetch chat history
+app.get('/chat/:chatId', async (req, res) => {
+  const { chatId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(chatId)) {
+    return res.status(400).json({ error: 'Invalid chat ID' });
+  }
+
+  try {
+    const chat = await Chat.findById(chatId).populate('messages.sender', 'firstName lastName image');
+    if (!chat) {
+      return res.status(404).json({ error: 'Chat not found' });
+    }
+    res.status(200).json(chat);
+  } catch (error) {
+    console.error('Error fetching chat:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ... existing code ...
+
+
+
+
+// ... existing code ...
+
+// Get games created by a specific user (admin)
+app.get('/api/games/user/:userId', async (req, res) => {
+  try {
+    const games = await Game.find({ admin: req.params.userId });
+    res.status(200).json({ games });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user games' });
+  }
+});
+
+// Update a game (only by admin)
+app.put('/api/games/:gameId', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId, ...updateData } = req.body;
+    const game = await Game.findOneAndUpdate(
+      { _id: gameId, admin: userId },
+      updateData,
+      { new: true }
+    );
+    if (!game) return res.status(403).json({ message: 'Not authorized or game not found' });
+    res.status(200).json({ game });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update game' });
+  }
+});
+
+// Delete a game (only by admin)
+app.delete('/api/games/:gameId', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { userId } = req.body;
+    const game = await Game.findOneAndDelete({ _id: gameId, admin: userId });
+    if (!game) return res.status(403).json({ message: 'Not authorized or game not found' });
+    res.status(200).json({ message: 'Game deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete game' });
+  }
+});
+
+// Get venues created by a specific user (assuming you store userId in venue)
+app.get('/api/venues/user/:userId', async (req, res) => {
+  try {
+    const venues = await Venue.find({ admin: req.params.userId });
+    res.status(200).json({ venues });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch user venues' });
+  }
+});
+
+// Update a venue (only by admin)
+app.put('/api/venues/:venueId', async (req, res) => {
+  try {
+    const { venueId } = req.params;
+    const { userId, ...updateData } = req.body;
+    const venue = await Venue.findOneAndUpdate(
+      { _id: venueId, admin: userId },
+      updateData,
+      { new: true }
+    );
+    if (!venue) return res.status(403).json({ message: 'Not authorized or venue not found' });
+    res.status(200).json({ venue });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to update venue' });
+  }
+});
+
+// Delete a venue (only by admin)
+app.delete('/api/venues/:venueId', async (req, res) => {
+  try {
+    const { venueId } = req.params;
+    const { userId } = req.body;
+    const venue = await Venue.findOneAndDelete({ _id: venueId, admin: userId });
+    if (!venue) return res.status(403).json({ message: 'Not authorized or venue not found' });
+    res.status(200).json({ message: 'Venue deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to delete venue' });
+  }
+});
+
+// ... existing code ...
